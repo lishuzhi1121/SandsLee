@@ -1,5 +1,7 @@
 ## Welcome to GitHub Pages
 
+点击查看：[iOS-alloc-init](https://github.com/lishuzhi1121/SandsLee/blob/master/iOS/iOS-alloc-init.md)
+
 You can use the [editor on GitHub](https://github.com/lishuzhi1121/SandsLee/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
 Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
