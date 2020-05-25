@@ -1,6 +1,6 @@
 ## Welcome to GitHub Pages
 
-点击查看：[iOS-alloc-init](https://github.com/lishuzhi1121/SandsLee/blob/master/iOS/iOS-alloc-init.md)
+点击查看：[iOS-alloc-init](iOS/iOS-alloc-init/)
 
 You can use the [editor on GitHub](https://github.com/lishuzhi1121/SandsLee/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
