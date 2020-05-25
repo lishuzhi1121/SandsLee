@@ -2,6 +2,8 @@
 
 点击查看：[iOS-alloc-init](iOS/iOS-alloc-init/)
 
+点击查看：[iOS-preMain-dyld-load](iOS/iOS-preMain-dyld-load/)
+
 You can use the [editor on GitHub](https://github.com/lishuzhi1121/SandsLee/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
 
 Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
