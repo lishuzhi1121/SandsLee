@@ -948,7 +948,7 @@ unmap_image_nolock(const struct mach_header *mh)
 
 仔细想想我们会发现，在上面runtime初始化的过程中并没有发现+initialize的身影，这也恰好说明了一个问题：+initialize方法会相对较晚执行，肯定是在main函数之后，更是在+load方法之后。
 
-其实， **一个类的+initialize方法是在第一次向该类发送消息时调用的** ，这就涉及到iOS的runtime消息发送机制了，细节请参考：[iOS运行时消息转发机制](iOS-runtime-msgSend)
+其实， **一个类的+initialize方法是在第一次向该类发送消息时调用的** ，这就涉及到iOS的runtime消息发送机制了，细节请参考：[iOS运行时消息转发机制](../iOS-runtime-msgSend/)
 
 下面我们做简单分析：
 
