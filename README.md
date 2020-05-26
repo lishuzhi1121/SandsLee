@@ -12,9 +12,5 @@ Hi，我是李树志，一名平凡的iOSer。欢迎来到我的博客空间。
 
 ### 3、[iOS的运行时消息转发机制/转发流程是怎样的？](iOS/iOS-runtime-msgSend/)
 
-点击查看：[iOS-alloc-init](iOS/iOS-alloc-init/)
 
-点击查看：[iOS-preMain-dyld-load](iOS/iOS-preMain-dyld-load/)
-
-点击查看：[iOS-runtime-msgSend](iOS/iOS-runtime-msgSend)
 
