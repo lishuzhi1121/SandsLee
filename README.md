@@ -1,4 +1,16 @@
-## Welcome to GitHub Pages
+# Welcome to SandsLee's blog
+
+![computer](https://raw.githubusercontent.com/lishuzhi1121/oss/master/uPic/20200526-170242-computer-2.jpg)
+
+Hi，我是李树志，一名平凡的iOSer。欢迎来到我的博客空间。
+
+## iOS 底层原理分析
+
+### 1、[iOS对象是如何初始化的？+alloc & -init 分别做了什么？](iOS/iOS-alloc-init/)
+
+### 2、[main函数之前发生了什么？App冷启动过程？+load方法和+initialize方法分别在何时调用？](iOS/iOS-preMain-dyld-load/)
+
+### 3、[iOS的运行时消息转发机制/转发流程是怎样的？](iOS/iOS-runtime-msgSend/)
 
 点击查看：[iOS-alloc-init](iOS/iOS-alloc-init/)
 
@@ -6,38 +18,3 @@
 
 点击查看：[iOS-runtime-msgSend](iOS/iOS-runtime-msgSend)
 
-You can use the [editor on GitHub](https://github.com/lishuzhi1121/SandsLee/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
-
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
-
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/lishuzhi1121/SandsLee/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.

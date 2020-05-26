@@ -1,4 +1,4 @@
-# main函数之前发生了什么？App冷启动过程？+load函数何时调用？
+# main函数之前发生了什么？App冷启动过程？+load方法和+initialize方法分别在何时调用？
 
 在我们新建的App项目代码中，XCode会自动创建一个`main.m`文件，其中定义了main函数:
 
@@ -64,7 +64,7 @@ void _objc_init(void)
 _dyld_objc_notify_register(&map_images, load_images, unmap_image);
 ```
 
-`_dyld_objc_notify_register` 函数是 `dyld` 为runtime提供的一个钩子，用来注册对dyld中关于加载images的事件回调：
+`_dyld_objc_notify_register` 函数是 **dyld** 为runtime提供的一个钩子，用来注册对dyld中关于加载images的事件回调：
 
 ```objc
 //
@@ -801,6 +801,64 @@ void call_load_methods(void)
 2. 结合前面class的+load方法添加到call +load队列中的顺序可以知道，superclass的+load方法调用时机是先于subclass的；
 3. 没有继承关系的class的+load方法调用时机取决于编译顺序（Xcode中可以调整）；
 
+另外，真正调用class和category的 +load 方法实际上是通过 `call_class_loads` 函数和 `call_category_loads`函数执行的。这两个函数的具体实现如下（有删减）：
+
+```objc
+// runtime源码: objc-loadmethod.mm中
+// 调用类的 load方法
+static void call_class_loads(void)
+{
+    int i;
+
+    // Call all +loads for the detached list.
+    for (i = 0; i < used; i++) {
+        Class cls = classes[i].cls;
+        // 拿到方法实现
+        load_method_t load_method = (load_method_t)classes[i].method;
+        if (!cls) continue; 
+
+        if (PrintLoading) {
+            _objc_inform("LOAD: +[%s load]\n", cls->nameForLogging());
+        }
+        // 直接调用
+        (*load_method)(cls, @selector(load));
+    }
+    // Destroy the detached list.
+    if (classes) free(classes);
+}
+
+// 调用分类的 load 方法
+static bool call_category_loads(void)
+{
+    int i, shift;
+
+    // Call all +loads for the detached list.
+    for (i = 0; i < used; i++) {
+        Category cat = cats[i].cat;
+        // 拿到方法实现
+        load_method_t load_method = (load_method_t)cats[i].method;
+        Class cls;
+        if (!cat) continue;
+
+        cls = _category_getClass(cat);
+        if (cls  &&  cls->isLoadable()) {
+            if (PrintLoading) {
+                _objc_inform("LOAD: +[%s(%s) load]\n", 
+                             cls->nameForLogging(), 
+                             _category_getName(cat));
+            }
+            // 直接调用
+            (*load_method)(cls, @selector(load));
+            cats[i].cat = nil;
+        }
+    }
+
+    return new_categories_added;
+}
+```
+
+从上面的调用方式我们就更加明确了为什么说 +load 方法不存在子类覆盖父类之说，这是 **因为 `+load` 方法的调用根本不是走 `objc_msgSend()` 的，而是直接拿到对应方法实现执行的啊** 。
+
 ## 4、unmap_image 卸载镜像
 
 当dyld要将image移除内存时，会发送`_dyld_objc_notify_unmapped`通知。在runtime中，是用`unmap_image`方法来响应的：
@@ -855,18 +913,20 @@ unmap_image_nolock(const struct mach_header *mh)
 
 结合注释来看，这个函数主要是做了header信息的移除工作。
 
-## 小结
+## 总结
 
 到此，我们知道了dyld在main()函数之前，会调用runtime的`_objc_init`函数。`_objc_init`是runtime的入口函数，它会根据Mach-O文件中相关的section信息来初始化runtime内存空间。比如，加载class，protocol，以及附加category到class，调用+load方法等。
 
 当dyld将我们App的运行环境都准备好后，dyld 会清理现场，将调用栈回归，调用main()函数，这时候，我们的App就算启动了。
+
+### 1、main()函数之前发生了什么？App冷启动过程
 
 在main()函数被调用前，系统其实已经为我们做了很多的准备工作，大致概括：
 
 > * 加载可执行文件。（App里的所有.o文件）
 > * 加载动态链接库，进行rebase指针调整和bind符号绑定。 （xcode run加个参数可以看库加载时间:DYLD_PRINT_STATISTICS=1）
 > * ObjC的runtime初始化。 包括：ObjC相关Class的注册、category注册、selector唯一性检查等
-> * 初始化。 包括：执行+load()方法、用attribute((constructor))修饰的函数的调用、创建C++静态全局变量
+> * 初始化。 包括：执行+load()方法、用__attribute((constructor))修饰的函数的调用、创建C++静态全局变量
 
 附：
 查看app启动时的Total pre-main time：
@@ -874,3 +934,148 @@ unmap_image_nolock(const struct mach_header *mh)
 ![pre-main-c](http://mweb.sandslee.com/2020-04-08-15863402449342.jpg)
 
 > 孤独的 main 函数，看上去是程序的开始，却是一段精彩的终结。
+
+
+### 2、+load方法是在什么时候调用的？
+
+经过了上面的详细分析，我们可以总结：+load方法其实是在dyld映射完镜像准备进行镜像初始化(init images)的时候回调 **runtime 的 `load_images()` 函数中调用的** 。
+
+### 3、+initialize方法又是在什么时候调用的？
+
+细心的你一定会发现，上面说了这么多都没有提到标题里写的 **+initialize方法** ，这是为什么呢？
+
+首先，真的不是我不愿意提，而是因为+initialize方法跟上面说的这些着实都不想管，因为它们不在一个level（阶段）上啊！下面我们就来看一下这个+initialize方法到底是在啥时候执行的呢？
+
+仔细想想我们会发现，在上面runtime初始化的过程中并没有发现+initialize的身影，这也恰好说明了一个问题：+initialize方法会相对较晚执行，肯定是在main函数之后，更是在+load方法之后。
+
+其实， **一个类的+initialize方法是在第一次向该类发送消息时调用的** ，这就涉及到iOS的runtime消息发送机制了，细节请参考：[iOS运行时消息转发机制](iOS-runtime-msgSend)
+
+下面我们做简单分析：
+
+我们知道 `objc_msgSend()` 函数的底层实现是汇编，那么经过一系列调用处理之后会调用runtime的 `lookUpImpOrForward()` 函数：
+
+```oc
+IMP lookUpImpOrForward(id inst, SEL sel, Class cls, int behavior)
+{
+    // ...
+    if (slowpath(!cls->isRealized())) {
+        cls = realizeClassMaybeSwiftAndLeaveLocked(cls, runtimeLock);
+        // runtimeLock may have been dropped but is now locked again
+    }
+    // 如果当前class没有初始化,则会进行初始化操作
+    if (slowpath((behavior & LOOKUP_INITIALIZE) && !cls->isInitialized())) {
+        cls = initializeAndLeaveLocked(cls, inst, runtimeLock);
+    }
+    //...
+    return imp;
+}
+```
+
+这个函数比较长，我只保留了与+initialize相关的部分，我们可以看到当一个类接收到消息的时候会检查这个类是否已经初始化过，如果没有，则会调用 `initializeAndLeaveLocked` 函数进行初始化：
+
+```objc
+static Class initializeAndLeaveLocked(Class cls, id obj, mutex_t& lock)
+{
+    return initializeAndMaybeRelock(cls, obj, lock, true);
+}
+```
+
+其内部又调用了 `initializeAndMaybeRelock` 函数（有删减）：
+
+```objc
+static Class initializeAndMaybeRelock(Class cls, id inst,
+                                      mutex_t& lock, bool leaveLocked)
+{
+    if (cls->isInitialized()) {
+        if (!leaveLocked) lock.unlock();
+        return cls;
+    }
+    // 继续调用初始化
+    initializeNonMetaClass(nonmeta);
+    
+    return cls;
+}
+```
+
+这个函数也有点长，但是其核心就是调用 `initializeNonMetaClass` 函数（有删减）：
+
+```objc
+void initializeNonMetaClass(Class cls)
+{
+    ASSERT(!cls->isMetaClass());
+
+    Class supercls;
+    bool reallyInitialize = NO;
+
+    // 递归调用父类初始化
+    supercls = cls->superclass;
+    if (supercls  &&  !supercls->isInitialized()) {
+        initializeNonMetaClass(supercls);
+    }
+    ......
+#if __OBJC2__
+        @try
+#endif
+        {
+            // 在这里调用+initialize方法
+            callInitialize(cls);
+
+            if (PrintInitializing) {
+                _objc_inform("INITIALIZE: thread %p: finished +[%s initialize]",
+                             objc_thread_self(), cls->nameForLogging());
+            }
+        }
+#if __OBJC2__
+        @catch (...) {
+            if (PrintInitializing) {
+                _objc_inform("INITIALIZE: thread %p: +[%s initialize] "
+                             "threw an exception",
+                             objc_thread_self(), cls->nameForLogging());
+            }
+            @throw;
+        }
+        @finally
+#endif
+        {
+            // Done initializing.
+            lockAndFinishInitializing(cls, supercls);
+        }
+        return;
+    }
+}
+```
+
+这个函数也很长（runtime函数就没有几个短的...），但是我们可以很快看到内部有一个 `callInitialize` 函数调用：
+
+```objc
+void callInitialize(Class cls)
+{
+    ((void(*)(Class, SEL))objc_msgSend)(cls, @selector(initialize));
+    asm("");
+}
+```
+
+到这里就舒服了啊，可以看到这里就直接调用了class的+initialize方法。
+
+##### 总结一下+initialize方法的特点：
+
+* +initialize方法是通过objc_msgSend进行调用的
+* 如果子类没有实现+initialize方法，则会调用父类的+initialize方法（所以父类的+initialize方法可能会被调用多次）
+* 分类的+initialize方法会覆盖本类的+initialize方法
+
+### +load方法和+initialize方法的区别
+
+1. 调用方式
+
+    * +load方法是找到方法对应实现的地址直接调用；
+    * +initialize方法则是通过objc_msgSend消息发送来调用的；
+
+2. 调用时机
+
+    * +load方法是runtime在load_images()中加载类、分类时调用的，并且只会调用一次；
+    * +initialize方法是在类第一次收到消息时调用的，每个类只会initialize一次，但是父类可能会被调用多次（子类未实现+initialize方法时）；
+
+3. 调用顺序
+
+    * +load方法：先调用类的+load（先编译的类先调用；父类先于子类），再调用分类的+load（先编译的分类先调用）；
+    * +initialize方法：先初始化父类，再初始化子类（可能最终调用的是父类的+initialize方法）；
