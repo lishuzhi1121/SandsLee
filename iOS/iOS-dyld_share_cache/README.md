@@ -96,6 +96,6 @@ clang++ dsc_extractor.cpp -o dsc_extractor
 
 为了方便，我把自己抽取好的 **armv7s系统动态库** 放在了这里：
 
-> 链接: https://pan.baidu.com/s/1uN17igafUosN97B3lmyS3A  密码: fia5
+> 链接: [https://pan.baidu.com/s/1uN17igafUosN97B3lmyS3A](https://pan.baidu.com/s/1uN17igafUosN97B3lmyS3A)  密码: fia5
 
 有需要的请自取！
