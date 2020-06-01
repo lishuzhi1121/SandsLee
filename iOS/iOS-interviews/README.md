@@ -38,23 +38,108 @@ Swift的可选类型，其实是一个枚举型，里面有None和Some两种类�
 
 ### 3、KVC 实现流程
 
+##### setValue:forKey：
+
+调用`setValue:forKey:`方法，首先会按照`setKey:`、`_setKey:`顺序查找方法:
+1.找到了方法：直接传递参数调用方法设值;
+2.没找到方法：会去查看`+(BOOL)accessInstanceVariablesDirectly`方法的返回值，该方法表示是否可以直接设置成员变量的值。
+返回NO：调用`setValue:forUndefinedKey:`并抛出异常NSUnkonwnKeyException；
+返回YES：会按照_key、_isKey、key、isKey顺序查找成员变量，如果找到成员变量直接赋值，没有找到同样抛出异常NSUnkonwnKeyException。
+
+参考：[KVC实现原理](https://www.meiwen.com.cn/subject/qxvxoqtx.html)
+
 ### 4、block都有哪些类型
 
+globalBlock、stackBlock 、mallocBlock 
+
+参考：[iOS Block的三种类型](https://www.jianshu.com/p/4b4e280f3f81)
+
 ### 5、__block 底层实现原理
+
+通过 `clang --rewrite-objc` 可以知道其实__block修饰的变量会被包装成一个结构体，变量成为结构体成员。
+
+```objc
+struct __Block_byref_count_0 {
+  void *__isa;
+__Block_byref_count_0 *__forwarding;
+ int __flags;
+ int __size;
+ int count;
+};
+
+struct __main_block_impl_0 {
+  struct __block_impl impl;
+  struct __main_block_desc_0* Desc;
+  __Block_byref_count_0 *count; // by ref
+  __main_block_impl_0(void *fp, struct __main_block_desc_0 *desc, __Block_byref_count_0 *_count, int flags=0) : count(_count->__forwarding) {
+    impl.isa = &_NSConcreteStackBlock;
+    impl.Flags = flags;
+    impl.FuncPtr = fp;
+    Desc = desc;
+  }
+};
+static void __main_block_func_0(struct __main_block_impl_0 *__cself) {
+  __Block_byref_count_0 *count = __cself->count; // bound by ref
+
+        (count->__forwarding->count)++;
+        NSLog((NSString *)&__NSConstantStringImpl__var_folders_lm_0sgjskj102d9k5_ypqff3bgh0000gn_T_main_296d47_mi_0, (count->__forwarding->count));
+    }
+static void __main_block_copy_0(struct __main_block_impl_0*dst, struct __main_block_impl_0*src) {_Block_object_assign((void*)&dst->count, (void*)src->count, 8/*BLOCK_FIELD_IS_BYREF*/);}
+
+static void __main_block_dispose_0(struct __main_block_impl_0*src) {_Block_object_dispose((void*)src->count, 8/*BLOCK_FIELD_IS_BYREF*/);}
+
+static struct __main_block_desc_0 {
+  size_t reserved;
+  size_t Block_size;
+  void (*copy)(struct __main_block_impl_0*, struct __main_block_impl_0*);
+  void (*dispose)(struct __main_block_impl_0*);
+} __main_block_desc_0_DATA = { 0, sizeof(struct __main_block_impl_0), __main_block_copy_0, __main_block_dispose_0};
+int main(int argc, char * argv[]) {
+    // 变量定义：int count = 0;
+    __attribute__((__blocks__(byref))) __Block_byref_count_0 count = {(void*)0,(__Block_byref_count_0 *)&count, 0, sizeof(__Block_byref_count_0), 0};
+    // block定义
+    void(*block)(void) = ((void (*)())&__main_block_impl_0((void *)__main_block_func_0, &__main_block_desc_0_DATA, (__Block_byref_count_0 *)&count, 570425344));
+    ((void (*)(__block_impl *))((__block_impl *)block)->FuncPtr)((__block_impl *)block);
+    return 0;
+}
+```
+
 
 
 ## 三、Soul
 
 ### 1、不可变字符串用strong修饰的话有什么问题？
 
+strong是引用类型，浅拷贝，指针引用，如果使用strong修饰，那么将一个字符串赋值给两个对象的strong类型的字符串属性时，字符串一变则两个对象的属性值都变了，因为只是地址引用。
+
+参考：[理解iOS中深浅拷贝-为什么NSString使用copy](https://www.jianshu.com/p/eda4957735ee)
+
 ### 2、block循环引用解决方案？__strong 修饰 __weak的对象引用计数会+1吗？如果会，什么时候+1？
+
+循环引用解决：__weak、__unsafe_unretained、@weakify和@strongify
+
+参考：[iOS 区块(Block)循环引用，看我就对了](https://www.jianshu.com/p/9f61eade1ec3)
+
+关于__strong 修饰引用计数问题请看下图：
+![](https://raw.githubusercontent.com/lishuzhi1121/oss/master/uPic/20200601-214950-IMG_1033.PNG)
+![](https://raw.githubusercontent.com/lishuzhi1121/oss/master/uPic/20200601-214830-IMG_1032.JPG)
+![](https://raw.githubusercontent.com/lishuzhi1121/oss/master/uPic/20200601-215033-IMG_1034.JPG)
+
+所以结论是，**这个block调用前这个对象被释放了，那么，strong的时候也是nil。如果没被释放，strong的引用计数+1**。
 
 ### 3、SDWebImage实现原理？加载超大图片10000*10000像素的图片会怎么样？底层对图片解码和不解码有什么区别？
 
+架构及缓存设计原理参考：[SDWebImage原理](https://www.jianshu.com/p/647721fb43e7)
+
+加载超大图片会导致内存爆增，从而引发crash
+
+提前解码主要是为了提升渲染效率，解码流程参考：[SDWebImage-解码、压缩图像](https://blog.csdn.net/ZCMUCZX/article/details/79505186)
+
+
 ### 4、tableView的滑动卡顿，优化方案？离屏渲染和高度缓存哪一个对卡顿影响较大？
 
-### 5、可变数组用copy修饰会有什么问题？
 
+### 5、可变数组用copy修饰会有什么问题？
 
 
 
