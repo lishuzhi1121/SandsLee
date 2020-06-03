@@ -1,5 +1,30 @@
 # iOS面试记录
 
+## 通用计算机技术
+
+### 1、HTTP OSI七层网络模型 & TCP/IP四层网络模型
+
+OSI七层网络模型参考下图：
+![osi](https://raw.githubusercontent.com/lishuzhi1121/LinuxTutorial/master/images/ISO:OSI%E4%B8%83%E5%B1%82%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B.png)
+
+TCP/IP 四层网络模型参考下图：
+![tcpip](https://raw.githubusercontent.com/lishuzhi1121/LinuxTutorial/master/images/IMG_A479D37BC665-1.jpeg)
+
+### 2、HTTP请求响应时间优化，DNS查询方式
+
+HTTP请求响应时间优化：
+* 结合实际业务，将不需要使用域名的直接改成IP，省去DNS查询（正常情况下，请求大部分时间消耗在DNS查询上），基本方案：本地维护一个ip列表，直接使用ip进行请求，而非用域名，并定期去服务器更新这个列表。同时还可以周期性的ping一下列表上的ip，动态选取延迟最小的ip。
+* 优化DNS解析，例如：HTTPDNS之类的技术方案解决，或者改用socket方式通信等
+* 根据网络情况，动态调整超时时间，可有效减少不必要的等待及重复请求；
+* 根据实际业务，适当合并多个接口到一个，避免同时并发多个http请求；
+* 根据情况客户端可以适当进行自动重发，此时 **服务端需要注意请求的幂等性**
+
+DNS查询方式参考下图：
+![dns](https://raw.githubusercontent.com/lishuzhi1121/LinuxTutorial/master/images/IMG_1867.PNG)
+
+这种方式叫 **迭代查询** 。
+
+
 ## 一、得物
 
 ### 1、atomic/nonatomic 的作用和区别？
