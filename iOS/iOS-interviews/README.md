@@ -202,3 +202,92 @@ CFStream实现socket通信架构：我们这边的实现是底层通过runloop�
 
 #### 11、业务总监：为什么你现在的期望薪资是xx？？
 
+## 四、阿里 ICBU
+
+#### 算法：可以装多少滴水？
+
+在一x、y轴平面上，给一有n(n>=2)个三元组的数组rects: 
+[(x11, x12, h1), ..., (xi1, xi2, hi), (xj1, xj2, hj), ..., (xn1, xn2, hn)]，
+对于数组中任意两个相邻三元组 (xi1, xi2, hi), (xj1, xj2, hj)，
+有：0 < xi1 < xi2 <= xj1 < xj2; 0 < hi; 0 < hj; 
+每个三元组对应平面上一矩形，矩形之间的 ***缝隙*** 可以装水，
+重力向下，每 **1*1** 面积装一滴水，求可以装多少滴水？
+
+例子
+如，输入数组为：[(1,2,2), (3,4,3), (5,8,1), (9,10,2)]
+输出：9
+
+![](https://raw.githubusercontent.com/lishuzhi1121/oss/master/uPic/2020/06/25-074140-PastedGraphic-1.png)
+
+此题暴力解法思路就是从数组中第一个元素开始，向后找比它高的矩形，找到则计算两个矩形之间的装水量，否则找出它后面最高的矩形，再计算装水量，然后从找到的最高矩形开始，继续找比它高的矩形，以此类推，直到数组遍历结束。示例代码如下：
+
+```swift
+typealias WarterElement = (Int, Int, Int)
+
+func warter(_ a : [WarterElement]) -> Int {
+    let warterList : [[Int]] = waterList(a);
+    var all = 0
+    for i in warterList {
+        let f = a[i.first!]
+        let l = a[i.last!]
+        var v = min(l.2, f.2) * (l.0 - f.1)
+        if i[1] - i[0] > 1 {
+            for j in i[0] + 1...i[1] - 1 {
+                let m = a[j]
+                let vr = (m.1-m.0) * m.2
+                if vr > 0 {
+                    v = v - vr
+                }
+            }
+        }
+
+        all = all + v
+    }
+    return all;
+}
+
+func waterList(_ a :[WarterElement]) -> [[Int]] {
+    var list : [[Int]] = [];
+    var element = [0];
+
+    var i = 1;
+    let count = a.count;
+    while i < count {
+        let index1 : WarterElement = a[element.first!]
+        var j = i
+        var secondLarge = j;
+        while true {
+            let index2 : WarterElement = a[j]
+            print("\(index1) ::: \(index2)")
+            if (index2.2 >= index1.2) {
+                element.append(j)
+                list.append(element)
+                element = [j]
+                i = j;
+                break;
+            }else{
+                if a[secondLarge].2 < a[j].2 {
+                    secondLarge = j
+                }
+                j = j + 1
+                if j >= count {
+                    element.append(secondLarge)
+                    list.append(element)
+                    element = [secondLarge]
+                    i = secondLarge
+                    break
+                }
+            }
+        }
+        i = i + 1
+    }
+    return list
+}
+
+print(warter([(1,2,2),(3,4,3),(5,8,1),(9,10,2)]))
+
+```
+
+这种方式虽然思路比较简单，但是计算上相对复杂，循环控制，面积又加右减，容易出错，下面我参考了leetcode的一个题目：[42. 接雨水](https://leetcode-cn.com/problems/trapping-rain-water/)
+
+与这一题很相似，只不过是对给定的数据源描述不同，那么我的思路就是将数据源转换为x轴对应的高度描述数组，从而解题，具体代码与注释详见：[Water](https://github.com/lishuzhi1121/SandsLee/tree/master/DataStructure%26Algorithm/Water/)
