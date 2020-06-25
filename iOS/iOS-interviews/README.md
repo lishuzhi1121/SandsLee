@@ -207,14 +207,21 @@ CFStream实现socket通信架构：我们这边的实现是底层通过runloop�
 #### 算法：可以装多少滴水？
 
 在一x、y轴平面上，给一有n(n>=2)个三元组的数组rects: 
+
 [(x11, x12, h1), ..., (xi1, xi2, hi), (xj1, xj2, hj), ..., (xn1, xn2, hn)]，
+
 对于数组中任意两个相邻三元组 (xi1, xi2, hi), (xj1, xj2, hj)，
+
 有：0 < xi1 < xi2 <= xj1 < xj2; 0 < hi; 0 < hj; 
+
 每个三元组对应平面上一矩形，矩形之间的 ***缝隙*** 可以装水，
+
 重力向下，每 **1*1** 面积装一滴水，求可以装多少滴水？
 
 例子
+
 如，输入数组为：[(1,2,2), (3,4,3), (5,8,1), (9,10,2)]
+
 输出：9
 
 ![](https://raw.githubusercontent.com/lishuzhi1121/oss/master/uPic/2020/06/25-074140-PastedGraphic-1.png)
