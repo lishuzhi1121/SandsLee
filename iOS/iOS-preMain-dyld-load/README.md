@@ -2,13 +2,13 @@
 
 在我们新建的App项目代码中，XCode会自动创建一个`main.m`文件，其中定义了main函数:
 
-![main-c](http://mweb.sandslee.com/2020-04-08-15863184022695.jpg)
+![main-c](http://sandslee.tpddns.cn:9000/markdown/2020-04-08-15863184022695.jpg)
 
 > main函数的两个参数`(int argc, char *argv[])`，在iOS中其实是没有用到的，这两个参数主要是为了与标准ANSI C保持一致。第一个表示参数个数，一般是1，第二个表示参数内容，一般是该App的可执行文件的路径。
 
 这里的 `main` 函数是我们整个App的入口，它的调用时机甚至会早于 `AppDelegate` 中的 `didFinishLaunching` 回调。
 
-![didFinish-c](http://mweb.sandslee.com/2020-04-08-15863185456335.jpg)
+![didFinish-c](http://sandslee.tpddns.cn:9000/markdown/2020-04-08-15863185456335.jpg)
 
 因此我们经常会说， **main函数是我们App程序的入口函数** 。
 
@@ -16,11 +16,11 @@
 
 但是，事实上真的是这样吗？如果我们在XCode中设置符号断点 `_objc_init` :
 
-![_objc_init-c](http://mweb.sandslee.com/2020-04-08-15863195718948.jpg)
+![_objc_init-c](http://sandslee.tpddns.cn:9000/markdown/2020-04-08-15863195718948.jpg)
 
 则会发现，在进入main函数之前，其实系统还会调用 `void _objc_init(void)` 方法：
 
-![void _objc_init(void)-c](http://mweb.sandslee.com/2020-04-08-15863194725202.jpg)
+![void _objc_init(void)-c](http://sandslee.tpddns.cn:9000/markdown/2020-04-08-15863194725202.jpg)
 
 > 从图上可以看到，在 **_objc_init** 之前还有很多方法的调用，这个调用栈其实就是app冷启动到main函数之前的一系列操作了。
 
@@ -931,7 +931,7 @@ unmap_image_nolock(const struct mach_header *mh)
 附：
 查看app启动时的Total pre-main time：
 
-![pre-main-c](http://mweb.sandslee.com/2020-04-08-15863402449342.jpg)
+![pre-main-c](http://sandslee.tpddns.cn:9000/markdown/2020-04-08-15863402449342.jpg)
 
 > 孤独的 main 函数，看上去是程序的开始，却是一段精彩的终结。
 
